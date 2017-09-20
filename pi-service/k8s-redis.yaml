@@ -1,0 +1,38 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: redis-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: bootstrap
+          image: memes/redis:1.0.1
+          ports:
+            - containerPort: 6379
+              name: redis
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 45
+            periodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  ports:
+    - port: 6379
+      targetPort: redis
+  selector:
+    app: redis

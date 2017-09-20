@@ -1,0 +1,132 @@
+# This docker-compose file will allow the services to run individually
+# on a host for testing, or as a deployed swarm.
+#
+# Launch one of each service on a single host
+# $ docker-compose up
+#
+# Launch replicated services on a swarm
+# $ docker stack deploy -c docker-compose.yml <swarm name>
+#
+version: "3"
+
+networks:
+  pi:
+    driver: overlay
+    
+services:
+  
+  # Redis master/slave needs a known starting master, and the
+  # bootstrap service provides it. Once a cluster of redis slaves are
+  # up and running, the bootstrap instance can fail and the remaining
+  # instances will choose a new master.
+  bootstrap-service:
+    image: memes/redis:1.0.1
+    environment:
+      - LAUNCH_AS_BOOTSTRAP=1
+      - REDIS_BOOTSTRAP_SERVICE_PORT=16379
+    networks:
+      - pi
+    expose:
+      - "16379"
+    # docker compose
+    container_name: bootstrap
+    # docker stack deploy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+
+  # Redis sentinels monitor the running instances and determine when a
+  # new master is required. Must have at least one instance running,
+  # better to have three or even five so that a quorum for new master
+  # election can always be present.
+  #
+  # The first sentinel that launches will need to connect to a known
+  # master, supplied by the bootstrap service.
+  sentinel-service:
+    image: memes/redis:1.0.1
+    environment:
+      - LAUNCH_AS_SENTINEL=1
+      - REDIS_BOOTSTRAP_SERVICE_PORT=16379
+    networks:
+      - pi
+    expose:
+      - "26379"
+    # docker-compose
+    container_name: sentinel
+    links:
+      - bootstrap-service:bootstrap-service
+    # docker stack deploy
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: any
+
+  # Standard redis instances; will initially start as read-only slaves
+  # that co-ordinate with one of the sentinels exposed via
+  # sentinel-service to determine current master for
+  # replication. Although these instances start as slaves, any
+  # instance may be promoted to master automatically if there is a
+  # failure of the master node.
+  #
+  # Depends on sentinel-service, but falls back to bootstrap-service
+  # if sentinels are not running or in a stable state.
+  redis-service:
+    image: memes/redis:1.0.1
+    environment:
+      - REDIS_BOOTSTRAP_SERVICE_PORT=16379
+    networks:
+      - pi
+    expose:
+      - "6379"
+    # docker-compose
+    container_name: redis
+    links:
+      - sentinel-service:sentinel-service
+      - bootstrap-service:bootstrap-service
+    # docker stack deploy
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: any
+
+  # Pi service component
+  pi-service:
+    image: memes/pi:1.0.0
+    # If need to debug, enable verbose option
+    #command: [ "server", "--verbose" ]
+    networks:
+      - pi
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    # docker-compose
+    container_name: pi
+    links:
+      - redis-service:redis-service
+      - sentinel-service:sentinel-service
+    # docker stack deploy
+    deploy:
+      replicas: 5
+      restart_policy:
+        condition: any
+
+  # This is a simple debugging instance; when launched it pauses for
+  # 60 seconds and then connects to the pi-service defined above.
+  # A quick test to help resolve issues when deploying to platforms
+  # for the first time.
+  debug-service:
+    image: memes/pi:1.0.0
+    command: [ "client", "--verbose", "--waitaminute", "--count", "10" ]
+    networks:
+      - pi
+    # docker-compose
+    container_name: debug
+    links:
+      - pi-service:pi-service
+    # docker stack deploy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none

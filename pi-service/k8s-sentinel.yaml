@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sentinel-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: sentinel
+    spec:
+      containers:
+        - name: sentinel
+          image: memes/redis:1.0.1
+          env:
+            - name: LAUNCH_AS_SENTINEL
+              value: "1"
+          ports:
+            - containerPort: 26379
+              name: redis-sentinel
+          readinessProbe:
+            tcpSocket:
+              port: redis-sentinel
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: redis-sentinel
+            initialDelaySeconds: 45
+            periodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-service
+spec:
+  ports:
+    - port: 26379
+      targetPort: redis-sentinel
+  selector:
+    app: sentinel

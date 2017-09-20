@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bootstrap-pod
+  labels:
+    app: bootstrap
+spec:
+  containers:
+    - name: bootstrap
+      image: memes/redis:1.0.1
+      env:
+        - name: LAUNCH_AS_BOOTSTRAP
+          value: "1"
+      ports:
+        - containerPort: 6379
+          name: redis
+      readinessProbe:
+        tcpSocket:
+          port: 6379
+        initialDelaySeconds: 30
+        periodSeconds: 30
+      livenessProbe:
+        tcpSocket:
+          port: 6379
+        initialDelaySeconds: 45
+        periodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bootstrap-service
+spec:
+  ports:
+    - port: 6379
+      targetPort: redis
+  selector:
+    app: bootstrap

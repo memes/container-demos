@@ -4,10 +4,30 @@ metadata:
   name: bootstrap-pod
   labels:
     app: bootstrap
+    class: redis
 spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: class
+                  operator: In
+                  values:
+                    - redis
+            topologyKey: kubernetes.io/hostname
   containers:
     - name: bootstrap
       image: memes/redis:1.0.1
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 250m
+        limits:
+          memory: 512Mi
+          cpu: 500m
       env:
         - name: LAUNCH_AS_BOOTSTRAP
           value: "1"
@@ -29,9 +49,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: bootstrap-service
+  labels:
+    class: redis
 spec:
   ports:
     - port: 6379
       targetPort: redis
   selector:
     app: bootstrap
+    class: redis

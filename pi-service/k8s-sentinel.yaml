@@ -8,10 +8,34 @@ spec:
     metadata:
       labels:
         app: sentinel
+        class: redis
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: class
+                      operator: In
+                      values:
+                        - redis
+                    - key: app
+                      operator: In
+                      values:
+                        - sentinel
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: sentinel
           image: memes/redis:1.0.1
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 125m
+            limits:
+              memory: 256Mi
+              cpu: 250m
           env:
             - name: LAUNCH_AS_SENTINEL
               value: "1"
@@ -33,9 +57,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sentinel-service
+  labels:
+    class: redis
 spec:
   ports:
     - port: 26379
       targetPort: redis-sentinel
   selector:
     app: sentinel
+    class: redis

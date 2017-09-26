@@ -2,7 +2,7 @@
 # and GOARCH setting in Makefile.
 #
 FROM golang:1.9-alpine as builder
-RUN apk add --no-cache make git protobuf musl-dev gcc && \
+RUN apk add --no-cache make git musl-dev gcc && \
     go get -u github.com/golang/dep/cmd/dep
 ARG BUST_A_CACHE=1
 RUN echo Busting caches since $BUST_A_CACHE

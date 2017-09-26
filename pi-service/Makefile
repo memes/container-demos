@@ -21,7 +21,7 @@ endif
 
 # If main.go is not present, pull the sources from git
 src/$(PACKAGE)/main.go:
-	go get github.com/memes/pi
+	go get $(PACKAGE)
 
 dep: src/$(PACKAGE)/main.go
 	cd src/$(PACKAGE) && dep ensure

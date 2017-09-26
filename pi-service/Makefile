@@ -5,7 +5,7 @@ PACKAGE:=github.com/memes/pi
 export GOPATH=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # Docker stuff
-DOCKER_TAG:=memes/pi:1.0.0
+DOCKER_TAG:=memes/pi:1.0.1
 
 # When on Windows, force shell to be cmd
 ifeq ($(OS),Windows_NT)

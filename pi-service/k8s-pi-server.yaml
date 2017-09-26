@@ -11,8 +11,8 @@ spec:
     spec:
       containers:
         - name: pi-server
-          image: memes/pi:1.0.0
-          command: [ "/usr/local/bin/pi", "server", "--verbose" ]
+          image: memes/pi:1.0.1
+          #command: [ "/usr/local/bin/pi", "server", "--verbose" ]
           ports:
             - containerPort: 8080
               name: alt-http

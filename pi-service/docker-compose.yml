@@ -92,7 +92,7 @@ services:
 
   # Pi service component
   pi-service:
-    image: memes/pi:1.0.0
+    image: memes/pi:1.0.1
     # If need to debug, enable verbose option
     #command: [ "server", "--verbose" ]
     networks:
@@ -117,7 +117,7 @@ services:
   # A quick test to help resolve issues when deploying to platforms
   # for the first time.
   debug-service:
-    image: memes/pi:1.0.0
+    image: memes/pi:1.0.1
     command: [ "client", "--verbose", "--waitaminute", "--count", "10" ]
     networks:
       - pi

@@ -13,6 +13,13 @@ spec:
         - name: pi-server
           image: memes/pi:1.0.1
           #command: [ "/usr/local/bin/pi", "server", "--verbose" ]
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 250m
+            limits:
+              memory: 512Mi
+              cpu: 500m
           ports:
             - containerPort: 8080
               name: alt-http

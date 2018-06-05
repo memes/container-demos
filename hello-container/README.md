@@ -6,5 +6,5 @@ Simple little container for testing and demo purposes.
 
 ```bash
 $ cd appengine
-$ gcloud deploy app
+$ gcloud app deploy
 ```
